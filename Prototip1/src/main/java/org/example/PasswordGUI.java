@@ -1,12 +1,12 @@
 package org.example;
 import javax.swing.*;
-import java.awt.*;
 
 
-public class UserGUI extends JFrame {
+public class PasswordGUI extends JFrame {
     boolean isRegistered;
-    //make action listener to button and chechk whether the user is registered or not if not return false and if false than wr,ite out
-
+    //TODO make action listener to button and chechk whether the user is registered or not if not return false and if false than wr,ite out
+    //TODO if the password and username on database than let the user open the second window(messaging one)
+    //TODO Return a boolean value that will ensure the user registered for the second problem
     public static void StartGUI() {
         JFrame frame = new JFrame("Luganus Plan(for now)");
         JLabel label = new JLabel("Please enter your password and username");
