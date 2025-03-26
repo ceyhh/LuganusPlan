@@ -1,10 +1,12 @@
 package org.example;
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 
 public class PasswordGUI extends JFrame {
     boolean isRegistered;
-    //TODO make action listener to button and chechk whether the user is registered or not if not return false and if false than wr,ite out
+    //TODO chechk whether the user is registered or not if not return false and if false than wr,ite out
     //TODO if the password and username on database than let the user open the second window(messaging one)
     //TODO Return a boolean value that will ensure the user registered for the second problem
     public static void StartGUI() {
@@ -25,6 +27,16 @@ public class PasswordGUI extends JFrame {
         label3.setBounds(10, 140, 80, 20);
         password.setBounds(100, 140, 100, 20);
         username.setBounds(100, 80, 100, 20);
+
+
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String usernameText = username.getText();
+                String passwordText = password.getPassword().toString();
+                password.setText("0000000000");
+
+            }
+        });
 
         frame.add(button);
         frame.add(label);
