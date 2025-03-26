@@ -1,5 +1,7 @@
 package org.example;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.print.attribute.UnmodifiableSetException;
 import javax.swing.*;
 
@@ -8,6 +10,8 @@ public class MessageBoxGUI extends JFrame{
     public static void StartGUI() {
 
         //TODO UserName 1/2/3/4 will show of w.r.t the combox and it will change
+        //DONE
+
         //TODO Messages going to upload from the server with username and the message
         //TODO also a new label will be added with a loop when it gets any new messages that will help that a new messahe to pop up
         //TODO repaint all the GraphicalCompenent with a regular time like 30 or 60fps
@@ -22,6 +26,7 @@ public class MessageBoxGUI extends JFrame{
 
         JComboBox comboBox = new JComboBox();
         JButton SentButton = new JButton("Sent");
+
         JLabel UserLabel = new JLabel("User1/2/3/4");
         JLabel MessageBoxLabel = new JLabel("AAAA");
         JTextField TextField = new JTextField();
@@ -36,6 +41,24 @@ public class MessageBoxGUI extends JFrame{
 
 
         comboBox.setBounds(80, 10, 200, 30);
+        comboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (comboBox.getSelectedItem().equals("User1")) {
+                    UserLabel.setText("User1");
+                }
+                else if (comboBox.getSelectedItem().equals("User2")) {
+                    UserLabel.setText("User2");
+                }
+                else if (comboBox.getSelectedItem().equals("User3")) {
+                    UserLabel.setText("User3");
+                }
+                else if (comboBox.getSelectedItem().equals("User4")) {
+                    UserLabel.setText("User4");
+                }
+            }
+
+        });
         SentButton.setBounds(80, 430, 100, 30);
         TextField.setBounds(80, 395, 200, 20);
 
