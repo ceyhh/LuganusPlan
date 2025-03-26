@@ -31,7 +31,7 @@ public class MessageBoxGUI extends JFrame{
         JLabel MessageBoxLabel = new JLabel("AAAA");
         JTextField TextField = new JTextField();
 
-        MessageBoxLabel.setBounds(10, 10, 200, 10);
+        MessageBoxLabel.setBounds(10, 10, 200, 30);
         panel.add(MessageBoxLabel);
         comboBox.setEditable(false);
         comboBox.addItem("User1");
@@ -60,6 +60,17 @@ public class MessageBoxGUI extends JFrame{
 
         });
         SentButton.setBounds(80, 430, 100, 30);
+
+        SentButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String text = TextField.getText();
+                MessageBoxLabel.setText(text);
+
+
+            }
+        });
         TextField.setBounds(80, 395, 200, 20);
 
         UserLabel.setBounds(80, 40, 100, 30);
