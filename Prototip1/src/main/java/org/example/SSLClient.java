@@ -5,20 +5,25 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-/**
- * @author garden
- * @create 8/11/18
- */
 public class SSLClient {
-    public static void main(String[] args){
+    private PrintWriter out;
+    private BufferedReader in;
+    private String userName;
+    private MessageBoxGUI gui;
+    private SSLSocket kkSocket; // Bağlantıyı kapatmak için referans
+
+    public SSLClient(MessageBoxGUI gui, String userName) {
+        this.gui = gui;
+        this.userName = userName;
+    }
+
+    public void connectAndStart() {
         try {
-            System.setProperty("javax.net.debug", "all");
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             String password = "aabbcc";
             InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("client-certificate.p12");
             keyStore.load(inputStream, password.toCharArray());
 
-            // TrustManagerFactory ()
             KeyStore trustStore = KeyStore.getInstance("PKCS12");
             String password2 = "abcdefg";
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -32,10 +37,8 @@ public class SSLClient {
                     break;
                 }
             }
-
             if (x509TrustManager == null) throw new NullPointerException();
 
-            // KeyManagerFactory ()
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509", "SunJSSE");
             keyManagerFactory.init(keyStore, password.toCharArray());
             X509KeyManager x509KeyManager = null;
@@ -47,49 +50,63 @@ public class SSLClient {
             }
             if (x509KeyManager == null) throw new NullPointerException();
 
-            // set up the SSL Context
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(new KeyManager[]{x509KeyManager}, new TrustManager[]{x509TrustManager}, null);
 
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-            SSLSocket kkSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1", 8333);
+            kkSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1", 8333);
             kkSocket.setEnabledProtocols(new String[]{"TLSv1.2"});
 
-            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(kkSocket.getInputStream()));
+            out = new PrintWriter(kkSocket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
 
-            BufferedReader stdIn =
-                    new BufferedReader(new InputStreamReader(System.in));
-            String fromServer;
-            String fromUser;
-
-            while ((fromServer = in.readLine()) != null) {
-                System.out.println("Server: " + fromServer);
-                if (fromServer.equals("Bye."))
-                    break;
-
-                fromUser = stdIn.readLine();
-                if (fromUser != null) {
-                    System.out.println("Client: " + fromUser);
-                    out.println(fromUser);
-                }
+            // Kullanıcı adını GUI'den alma kaldırıldı, doğrudan gönder
+            String prompt = in.readLine();
+            if (prompt != null && prompt.equals("Please enter your name:")) {
+                out.println(userName);
             }
-        }catch (IOException e){
-            e.printStackTrace();
-        } catch (CertificateException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        }
 
+            // Mesajları GUI'ye aktaran thread
+            Thread readerThread = new Thread(() -> {
+                String fromServer;
+                try {
+                    while ((fromServer = in.readLine()) != null) {
+                        // Eğer kullanıcı zaten aktifse hata kutucuğu göster ve çık
+                        if (fromServer.startsWith("ERROR: This user is already active")) {
+                            javax.swing.SwingUtilities.invokeLater(() -> {
+                                javax.swing.JOptionPane.showMessageDialog(null,
+                                        "This user is currently active. Please try again later.",
+                                        "Login Error",
+                                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                                System.exit(0);
+                            });
+                            break;
+                        }
+                        gui.appendMessage(fromServer);
+                    }
+                } catch (IOException e) {
+                    gui.appendMessage("Connection closed.");
+                }
+            });
+            readerThread.setDaemon(true);
+            readerThread.start();
+
+        } catch (Exception e) {
+            gui.appendMessage("Connection error: " + e.getMessage());
+        }
+    }
+
+    public void sendMessage(String message) {
+        if (out != null) {
+            out.println(message);
+        }
+    }
+
+    // Bağlantıyı düzgün kapat
+    public void disconnect() {
+        try {
+            if (out != null) out.println("Bye.");
+            if (kkSocket != null && !kkSocket.isClosed()) kkSocket.close();
+        } catch (IOException ignored) {}
     }
 }
