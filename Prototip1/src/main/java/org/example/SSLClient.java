@@ -11,10 +11,19 @@ public class SSLClient {
     private String userName;
     private MessageBoxGUI gui;
     private SSLSocket kkSocket; // Bağlantıyı kapatmak için referans
+    private String serverIp;
+    private int serverPort;
 
-    public SSLClient(MessageBoxGUI gui, String userName) {
+    public SSLClient(MessageBoxGUI gui, String userName, String serverIp, int serverPort) {
         this.gui = gui;
         this.userName = userName;
+        this.serverIp = serverIp;
+        this.serverPort = serverPort;
+    }
+
+    // Eski constructor (kullanılmayacak)
+    public SSLClient(MessageBoxGUI gui, String userName) {
+        this(gui, userName, "127.0.0.1", 8333);
     }
 
     public void connectAndStart() {
@@ -54,7 +63,7 @@ public class SSLClient {
             sslContext.init(new KeyManager[]{x509KeyManager}, new TrustManager[]{x509TrustManager}, null);
 
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-            kkSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1", 8333);
+            kkSocket = (SSLSocket) socketFactory.createSocket(serverIp, serverPort);
             kkSocket.setEnabledProtocols(new String[]{"TLSv1.2"});
 
             out = new PrintWriter(kkSocket.getOutputStream(), true);
@@ -77,6 +86,17 @@ public class SSLClient {
                                 javax.swing.JOptionPane.showMessageDialog(null,
                                         "This user is currently active. Please try again later.",
                                         "Login Error",
+                                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                                System.exit(0);
+                            });
+                            break;
+                        }
+                        // Eğer kullanıcı kayıttan silindiyse bağlantı koptu mesajı göster ve çık
+                        if (fromServer.startsWith("DISCONNECT:")) {
+                            javax.swing.SwingUtilities.invokeLater(() -> {
+                                javax.swing.JOptionPane.showMessageDialog(null,
+                                        "Connection lost: Your account has been deleted.",
+                                        "Disconnected",
                                         javax.swing.JOptionPane.ERROR_MESSAGE);
                                 System.exit(0);
                             });

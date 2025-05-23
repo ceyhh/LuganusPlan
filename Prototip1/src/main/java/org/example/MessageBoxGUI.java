@@ -18,7 +18,7 @@ public class MessageBoxGUI extends JFrame {
     private JList<String> userList;
     private Map<String, Boolean> userStatusMap = new HashMap<>(); // kullanıcı adı -> online mı
 
-    public MessageBoxGUI(String userName) {
+    public MessageBoxGUI(String userName, String serverIp, int serverPort) {
         this.userName = userName;
         setTitle("Chat Box - " + userName);
         setSize(700, 500);
@@ -51,7 +51,7 @@ public class MessageBoxGUI extends JFrame {
         add(userListScroll, BorderLayout.EAST);
 
         // SSLClient başlat
-        client = new SSLClient(this, userName);
+        client = new SSLClient(this, userName, serverIp, serverPort);
         client.connectAndStart();
 
         // Mesaj gönderme
@@ -156,9 +156,9 @@ public class MessageBoxGUI extends JFrame {
         }
     }
 
-    public static void StartGUI(String userName) {
+    public static void StartGUI(String userName, String serverIp, int serverPort) {
         SwingUtilities.invokeLater(() -> {
-            MessageBoxGUI gui = new MessageBoxGUI(userName);
+            MessageBoxGUI gui = new MessageBoxGUI(userName, serverIp, serverPort);
             gui.setVisible(true);
         });
     }

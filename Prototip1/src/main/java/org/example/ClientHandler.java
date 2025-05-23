@@ -49,6 +49,22 @@ public class ClientHandler implements Runnable {
         return timestamp + " " + msg;
     }
 
+    private boolean isUserStillRegistered() {
+        File userFile = new File("kullanicilar.txt");
+        if (!userFile.exists()) return false;
+        try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length >= 1 && parts[0].equals(clientName)) {
+                    return true;
+                }
+            }
+        } catch (IOException ignored) {
+        }
+        return false;
+    }
+
     @Override
     public void run() {
         try {
@@ -74,9 +90,33 @@ public class ClientHandler implements Runnable {
 
             sendHistory();
 
+            // Kullanıcı silinmiş mi kontrolü için thread başlat
+            Thread registrationChecker = new Thread(() -> {
+                try {
+                    while (!socket.isClosed()) {
+                        Thread.sleep(5000);
+                        if (!isUserStillRegistered()) {
+                            out.println("DISCONNECT: Your account has been deleted.");
+                            socket.close();
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+            registrationChecker.setDaemon(true);
+            registrationChecker.start();
+
             while (true) {
                 String inputLine = in.readLine();
                 if (inputLine == null || inputLine.equalsIgnoreCase("Bye.")) break;
+
+                // Her mesajda da kontrol et
+                if (!isUserStillRegistered()) {
+                    out.println("DISCONNECT: Your account has been deleted.");
+                    break;
+                }
+
                 String msg = clientName + ": " + inputLine;
                 String msgWithTime = addTimestamp(msg);
                 System.out.println(msgWithTime);
@@ -105,3 +145,5 @@ public class ClientHandler implements Runnable {
         }
     }
 }
+
+       
