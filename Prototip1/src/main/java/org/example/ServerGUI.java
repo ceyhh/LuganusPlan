@@ -125,8 +125,8 @@ public class ServerGUI extends JFrame {
         try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts.length >= 1 && parts[0].equals(username)) {
+                String[] parts = line.split(":", 2);
+                if (parts.length >= 1 && parts[0].trim().equals(username.trim())) {
                     return true;
                 }
             }
@@ -142,8 +142,8 @@ public class ServerGUI extends JFrame {
              BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts.length >= 1 && parts[0].equals(username)) {
+                String[] parts = line.split(":", 2);
+                if (parts.length >= 1 && parts[0].trim().equals(username.trim())) {
                     deleted = true;
                     continue;
                 }
@@ -166,13 +166,13 @@ public class ServerGUI extends JFrame {
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes());
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
                 sb.append(String.format("%02x", b));
             }
             return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -183,9 +183,9 @@ public class ServerGUI extends JFrame {
         try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts.length >= 1 && !parts[0].isEmpty()) {
-                    appendLog(getTimestamp() + " Registered user: " + parts[0]);
+                String[] parts = line.split(":", 2);
+                if (parts.length >= 1 && !parts[0].trim().isEmpty()) {
+                    appendLog(getTimestamp() + " Registered user: " + parts[0].trim());
                 }
             }
         } catch (IOException ignored) {}
@@ -220,9 +220,9 @@ public class ServerGUI extends JFrame {
             try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] parts = line.split(":");
-                    if (parts.length >= 1 && !parts[0].isEmpty()) {
-                        userStatusMap.put(parts[0], isUserOnline(parts[0]));
+                    String[] parts = line.split(":", 2);
+                    if (parts.length >= 1 && !parts[0].trim().isEmpty()) {
+                        userStatusMap.put(parts[0].trim(), isUserOnline(parts[0].trim()));
                     }
                 }
             } catch (IOException ignored) {}

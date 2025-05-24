@@ -1,6 +1,7 @@
 package org.example;
 
 import javax.net.ssl.*;
+import javax.swing.*;
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -9,35 +10,37 @@ public class SSLClient {
     private PrintWriter out;
     private BufferedReader in;
     private String userName;
+    private String userPassword; // kullanıcıdan alınan şifre
     private MessageBoxGUI gui;
     private SSLSocket kkSocket; // Bağlantıyı kapatmak için referans
     private String serverIp;
     private int serverPort;
 
-    public SSLClient(MessageBoxGUI gui, String userName, String serverIp, int serverPort) {
+    public SSLClient(MessageBoxGUI gui, String userName, String userPassword, String serverIp, int serverPort) {
         this.gui = gui;
         this.userName = userName;
+        this.userPassword = userPassword;
         this.serverIp = serverIp;
         this.serverPort = serverPort;
     }
 
     // Eski constructor (kullanılmayacak)
     public SSLClient(MessageBoxGUI gui, String userName) {
-        this(gui, userName, "127.0.0.1", 8333);
+        this(gui, userName, null, "127.0.0.1", 8333);
     }
 
     public void connectAndStart() {
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            String password = "aabbcc";
+            String certPassword = "aabbcc";
             InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("client-certificate.p12");
-            keyStore.load(inputStream, password.toCharArray());
+            keyStore.load(inputStream, certPassword.toCharArray());
 
             KeyStore trustStore = KeyStore.getInstance("PKCS12");
-            String password2 = "abcdefg";
+            String trustPassword = "abcdefg";
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             InputStream inputStream1 = ClassLoader.getSystemClassLoader().getResourceAsStream("server-certificate.p12");
-            trustStore.load(inputStream1, password2.toCharArray());
+            trustStore.load(inputStream1, trustPassword.toCharArray());
             trustManagerFactory.init(trustStore);
             X509TrustManager x509TrustManager = null;
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
@@ -49,7 +52,7 @@ public class SSLClient {
             if (x509TrustManager == null) throw new NullPointerException();
 
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509", "SunJSSE");
-            keyManagerFactory.init(keyStore, password.toCharArray());
+            keyManagerFactory.init(keyStore, certPassword.toCharArray());
             X509KeyManager x509KeyManager = null;
             for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
                 if (keyManager instanceof X509KeyManager) {
@@ -69,64 +72,51 @@ public class SSLClient {
             out = new PrintWriter(kkSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
 
-            // Kullanıcı adını GUI'den alma kaldırıldı, doğrudan gönder
+            // Kullanıcı adı ve şifreyi düz olarak gönder
             String prompt = in.readLine();
-            if (prompt != null && prompt.equals("Please enter your name:")) {
+            if (prompt != null && prompt.equals("AUTH_REQUEST")) {
                 out.println(userName);
+                out.println(userPassword);
+
+                // Sunucudan auth cevabını bekle
+                String authResp = in.readLine();
+                if ("auth_OK".equals(authResp)) {
+                    // giriş başarılı, devam et
+                } else if ("auth_NOTOK".equals(authResp)) {
+                    JOptionPane.showMessageDialog(null, "Authentication failed!", "Login Error", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Other problems occurred during authentication.", "Login Error", JOptionPane.ERROR_MESSAGE);
+                    System.exit(0);
+                }
             }
 
-            // Mesajları GUI'ye aktaran thread
             Thread readerThread = new Thread(() -> {
                 String fromServer;
                 try {
                     while ((fromServer = in.readLine()) != null) {
-                        // Eğer kullanıcı zaten aktifse hata kutucuğu göster ve çık
-                        if (fromServer.startsWith("ERROR: This user is already active")) {
-                            javax.swing.SwingUtilities.invokeLater(() -> {
-                                javax.swing.JOptionPane.showMessageDialog(null,
-                                        "This user is currently active. Please try again later.",
-                                        "Login Error",
-                                        javax.swing.JOptionPane.ERROR_MESSAGE);
-                                System.exit(0);
-                            });
-                            break;
-                        }
-                        // Eğer kullanıcı kayıttan silindiyse bağlantı koptu mesajı göster ve çık
-                        if (fromServer.startsWith("DISCONNECT:")) {
-                            javax.swing.SwingUtilities.invokeLater(() -> {
-                                javax.swing.JOptionPane.showMessageDialog(null,
-                                        "Connection lost: Your account has been deleted.",
-                                        "Disconnected",
-                                        javax.swing.JOptionPane.ERROR_MESSAGE);
-                                System.exit(0);
-                            });
-                            break;
-                        }
                         gui.appendMessage(fromServer);
                     }
                 } catch (IOException e) {
                     gui.appendMessage("Connection closed.");
                 }
             });
-            readerThread.setDaemon(true);
             readerThread.start();
-
         } catch (Exception e) {
             gui.appendMessage("Connection error: " + e.getMessage());
         }
     }
 
-    public void sendMessage(String message) {
+    public void sendMessage(String msg) {
         if (out != null) {
-            out.println(message);
+            out.println(msg);
         }
     }
 
-    // Bağlantıyı düzgün kapat
     public void disconnect() {
         try {
             if (out != null) out.println("Bye.");
-            if (kkSocket != null && !kkSocket.isClosed()) kkSocket.close();
+            if (kkSocket != null) kkSocket.close();
         } catch (IOException ignored) {}
     }
 }

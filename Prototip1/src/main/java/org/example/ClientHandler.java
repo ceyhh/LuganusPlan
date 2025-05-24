@@ -71,8 +71,21 @@ public class ClientHandler implements Runnable {
             out = new PrintWriter(socket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            out.println("Please enter your name:");
-            clientName = in.readLine();
+            // Auth protokolü
+            out.println("AUTH_REQUEST");
+            String usernameInput = in.readLine();
+            String passwordInput = in.readLine();
+
+            // Şifreyi hashle ve öyle kontrol et
+            String hashedPasswordInput = hashPassword(passwordInput);
+
+            if (!checkUserPassword(usernameInput, hashedPasswordInput)) {
+                out.println("auth_NOTOK");
+                socket.close();
+                return;
+            }
+            out.println("auth_OK");
+            clientName = usernameInput;
 
             // Eğer kullanıcı zaten online ise bağlantıyı reddet
             if (onlineUsers.contains(clientName)) {
@@ -144,6 +157,37 @@ public class ClientHandler implements Runnable {
             e.printStackTrace();
         }
     }
-}
 
-       
+    // Kullanıcı adı ve hashlenmiş şifreyi txt'de kontrol et
+    private boolean checkUserPassword(String username, String hashedPassword) {
+        File userFile = new File("kullanicilar.txt");
+        if (!userFile.exists()) return false;
+        try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(":", 2);
+                if (parts.length == 2 &&
+                    parts[0].trim().equals(username.trim()) &&
+                    parts[1].trim().equals(hashedPassword.trim())) {
+                    return true;
+                }
+            }
+        } catch (IOException ignored) {}
+        return false;
+    }
+
+    // Yeni: Şifreyi hashle
+    private String hashPassword(String password) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}

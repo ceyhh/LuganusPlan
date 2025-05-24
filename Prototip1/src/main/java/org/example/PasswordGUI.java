@@ -86,74 +86,43 @@ public class PasswordGUI extends JFrame {
         }
 
         if (canConnect) {
-            // 4. Kullanıcı adı/şifre ekranı aç
+            // 4. Kullanıcı adı ve şifre ekranı aç
             JFrame frame = new JFrame("Luganus Plan(for now)");
-            JLabel label = new JLabel("Please enter your password and username");
-            JLabel label3 = new JLabel("Password: ");
+            JLabel label = new JLabel("Please enter your username and password");
             JLabel label2 = new JLabel("Username: ");
-            JLabel label4 = new JLabel();
+            JLabel label3 = new JLabel("Password: ");
             JButton button = new JButton("Login");
-            JPasswordField password = new JPasswordField();
             JTextField username = new JTextField();
+            JPasswordField password = new JPasswordField();
 
-            label4.setBounds(300,100,100,30);
-            button.setBounds(100, 200, 100, 30);
+            button.setBounds(100, 150, 100, 30);
             label.setBounds(10, 10, 300, 20);
-            label2.setBounds(10, 80, 80, 20);
-            label3.setBounds(10, 140, 80, 20);
-            password.setBounds(100, 140, 100, 20);
-            username.setBounds(100, 80, 100, 20);
+            label2.setBounds(10, 60, 80, 20);
+            username.setBounds(100, 60, 100, 20);
+            label3.setBounds(10, 100, 80, 20);
+            password.setBounds(100, 100, 100, 20);
 
             button.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     String usernameText = username.getText().trim();
                     String passwordText = new String(password.getPassword()).trim();
-                    boolean found = false;
-
-                    File userFile = new File("kullanicilar.txt");
-                    if (!userFile.exists()) {
-                        try {
-                            userFile.createNewFile();
-                        } catch (IOException ex) {
-                            JOptionPane.showMessageDialog(frame, "User file error!");
-                            System.exit(0);
-                        }
+                    if (usernameText.isEmpty() || passwordText.isEmpty()) {
+                        JOptionPane.showMessageDialog(frame, "Username and password cannot be empty.");
+                        return;
                     }
-
-                    String hashedPassword = hashPassword(passwordText);
-
-                    try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            String[] parts = line.split(":");
-                            if (parts.length == 2 && parts[0].equals(usernameText) && parts[1].equals(hashedPassword)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "File read error!");
-                        System.exit(0);
-                    }
-
-                    if (found) {
-                        frame.dispose();
-                        MessageBoxGUI.StartGUI(usernameText, serverIp, serverPort);
-                    } else {
-                        JOptionPane.showMessageDialog(frame, "You are not registered, please register.");
-                        System.exit(0);
-                    }
+                    frame.dispose();
+                    MessageBoxGUI.StartGUI(usernameText, passwordText, serverIp, serverPort);
                 }
             });
 
             frame.add(button);
             frame.add(label);
-            frame.add(label3);
-            frame.add(password);
             frame.add(label2);
             frame.add(username);
+            frame.add(label3);
+            frame.add(password);
 
-            frame.setSize(500, 500);
+            frame.setSize(350, 250);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setLocationRelativeTo(null);
             frame.setLayout(null);
@@ -164,7 +133,7 @@ public class PasswordGUI extends JFrame {
     private static String hashPassword(String password) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes());
+            byte[] hash = md.digest(password.getBytes("UTF-8"));
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
                 sb.append(String.format("%02x", b));

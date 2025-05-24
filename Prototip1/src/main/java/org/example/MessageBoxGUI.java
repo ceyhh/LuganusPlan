@@ -12,14 +12,16 @@ public class MessageBoxGUI extends JFrame {
     private JButton sendButton;
     private SSLClient client;
     private String userName;
+    private String password; // yeni alan
 
     // Kullanıcı listesi için eklenen alanlar
     private DefaultListModel<String> userListModel;
     private JList<String> userList;
     private Map<String, Boolean> userStatusMap = new HashMap<>(); // kullanıcı adı -> online mı
 
-    public MessageBoxGUI(String userName, String serverIp, int serverPort) {
+    public MessageBoxGUI(String userName, String password, String serverIp, int serverPort) {
         this.userName = userName;
+        this.password = password;
         setTitle("Chat Box - " + userName);
         setSize(700, 500);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Kapatma işlemini kendimiz yöneteceğiz
@@ -51,7 +53,7 @@ public class MessageBoxGUI extends JFrame {
         add(userListScroll, BorderLayout.EAST);
 
         // SSLClient başlat
-        client = new SSLClient(this, userName, serverIp, serverPort);
+        client = new SSLClient(this, userName, password, serverIp, serverPort);
         client.connectAndStart();
 
         // Mesaj gönderme
@@ -80,9 +82,9 @@ public class MessageBoxGUI extends JFrame {
             try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] parts = line.split(":");
-                    if (parts.length >= 1 && !parts[0].isEmpty()) {
-                        userStatusMap.put(parts[0], false);
+                    String[] parts = line.split(":", 2);
+                    if (parts.length >= 1 && !parts[0].trim().isEmpty()) {
+                        userStatusMap.put(parts[0].trim(), false);
                     }
                 }
             } catch (IOException ignored) {}
@@ -156,9 +158,9 @@ public class MessageBoxGUI extends JFrame {
         }
     }
 
-    public static void StartGUI(String userName, String serverIp, int serverPort) {
+    public static void StartGUI(String userName, String password, String serverIp, int serverPort) {
         SwingUtilities.invokeLater(() -> {
-            MessageBoxGUI gui = new MessageBoxGUI(userName, serverIp, serverPort);
+            MessageBoxGUI gui = new MessageBoxGUI(userName, password, serverIp, serverPort);
             gui.setVisible(true);
         });
     }
