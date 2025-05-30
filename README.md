@@ -1,3 +1,3 @@
-#Luganus Plan
-#A open source basic java chatting application
-##Uses TLS as proctecting protocol
+# Luganus Plan
+# A open source basic java chatting application
+## Uses TLS as proctecting protocol
