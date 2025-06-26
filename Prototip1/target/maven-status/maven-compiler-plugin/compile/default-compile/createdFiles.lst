@@ -1,9 +1,10 @@
-org\example\SSLClient.class
 org\example\MessageBoxGUI$1.class
 org\example\PasswordGUI$1.class
 org\example\ServerGUI.class
 org\example\Main.class
 org\example\ClientHandler.class
+org\example\SSLClient.class
+org\example\SSLClient$1.class
 org\example\ServerGUI$UserStatusRenderer.class
 org\example\MessageBoxGUI$UserStatusRenderer.class
 org\example\SSLServer.class

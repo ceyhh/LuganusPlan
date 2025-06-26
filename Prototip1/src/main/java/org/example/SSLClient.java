@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 public class SSLClient {
     private PrintWriter out;
@@ -36,20 +37,18 @@ public class SSLClient {
             InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("client-certificate.p12");
             keyStore.load(inputStream, certPassword.toCharArray());
 
-            KeyStore trustStore = KeyStore.getInstance("PKCS12");
-            String trustPassword = "abcdefg";
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            InputStream inputStream1 = ClassLoader.getSystemClassLoader().getResourceAsStream("server-certificate.p12");
-            trustStore.load(inputStream1, trustPassword.toCharArray());
-            trustManagerFactory.init(trustStore);
-            X509TrustManager x509TrustManager = null;
-            for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
-                if (trustManager instanceof X509TrustManager) {
-                    x509TrustManager = (X509TrustManager) trustManager;
-                    break;
-                }
-            }
-            if (x509TrustManager == null) throw new NullPointerException();
+            // TrustManager'ı geçici olarak tüm sertifikalara güvenecek şekilde değiştiriyoruz
+            TrustManager[] trustAllCerts = new TrustManager[] {
+                    new X509TrustManager() {
+                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                            return null;
+                        }
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+                    }
+            };
 
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509", "SunJSSE");
             keyManagerFactory.init(keyStore, certPassword.toCharArray());
@@ -63,11 +62,14 @@ public class SSLClient {
             if (x509KeyManager == null) throw new NullPointerException();
 
             SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(new KeyManager[]{x509KeyManager}, new TrustManager[]{x509TrustManager}, null);
+            // trustAllCerts'i kullanarak SSLContext'i başlatıyoruz
+            sslContext.init(new KeyManager[]{x509KeyManager}, trustAllCerts, null);
 
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
             kkSocket = (SSLSocket) socketFactory.createSocket(serverIp, serverPort);
             kkSocket.setEnabledProtocols(new String[]{"TLSv1.2"});
+            // Desteklenen tüm şifreleme paketlerini ayarlayın
+            kkSocket.setEnabledCipherSuites(kkSocket.getSupportedCipherSuites());
 
             out = new PrintWriter(kkSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
@@ -120,3 +122,5 @@ public class SSLClient {
         } catch (IOException ignored) {}
     }
 }
+
+

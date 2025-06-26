@@ -17,7 +17,7 @@ public class SSLServer {
     public static ServerGUI serverGUIInstance = null;
 
     public static void main(String[] args) {
-        // Server GUI'yi başlat
+        // Server GUI\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'yi başlat
         javax.swing.SwingUtilities.invokeLater(() -> {
             serverGUIInstance = new ServerGUI();
             serverGUIInstance.setVisible(true);
@@ -33,11 +33,11 @@ public class SSLServer {
             InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("server-certificate.p12");
             keyStore.load(inputStream, password.toCharArray());
 
-            String password2 = "aabbcc";
+            String trustPassword = "abcdefg";
             KeyStore trustStore = KeyStore.getInstance("PKCS12");
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            InputStream inputStream1 = ClassLoader.getSystemClassLoader().getResourceAsStream("client-certificate.p12");
-            trustStore.load(inputStream1, password2.toCharArray());
+            InputStream inputStream1 = ClassLoader.getSystemClassLoader().getResourceAsStream("server-truststore.p12");
+            trustStore.load(inputStream1, trustPassword.toCharArray());
             trustManagerFactory.init(trustStore);
             X509TrustManager x509TrustManager = null;
             for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
@@ -66,6 +66,8 @@ public class SSLServer {
             SSLServerSocket serverSocket = (SSLServerSocket) serverSocketFactory.createServerSocket(8333);
             serverSocket.setNeedClientAuth(true);
             serverSocket.setEnabledProtocols(new String[]{"TLSv1.2"});
+            // Desteklenen tüm şifreleme paketlerini ayarlayın
+            serverSocket.setEnabledCipherSuites(serverSocket.getSupportedCipherSuites());
 
             System.out.println("Server started, waiting for clients...");
 
@@ -96,7 +98,7 @@ public class SSLServer {
         }
     }
 
-    // Yeni mesajı dosyaya ekle ve GUI'ye logla
+    // Yeni mesajı dosyaya ekle ve GUI\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'ye logla
     public static synchronized void appendMessageToFile(String message) {
         messageHistory.add(message);
         try (FileWriter fw = new FileWriter(MESSAGE_LOG_FILE, true);
@@ -106,10 +108,10 @@ public class SSLServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // Server GUI'ye anlık log ekle
+        // Server GUI\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'ye anlık log ekle
         if (serverGUIInstance != null) {
             // Eğer mesaj zaten timestamp ile başlıyorsa tekrar ekleme
-            if (message.matches("^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\].*")) {
+            if (message.matches("^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\] .*")) {
                 serverGUIInstance.appendLog(message);
             } else {
                 String timestamp = "[" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + "]";
@@ -118,3 +120,5 @@ public class SSLServer {
         }
     }
 }
+
+
