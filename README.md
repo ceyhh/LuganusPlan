@@ -27,6 +27,9 @@
 - Only on the server management add users and delete users on server side.
 - In order to run server you can compile with maven the SSLServer.java or directly open it on your IDE.
 - Current pom.xml is using .Main(client side) so dont forget to change it to .SSLServer if you want to compile.
+- You must add your own certificate to LuganusPlan/Prototip1/src/main/resoruces (create a file which name is resoruces)
+- You must name your certficiates as client-certificate.p12,client-truststore.p12,server-certificate.p12,server-truststore.p12 (or you can change the names from the source code)
+
 
 
 ## Warning
